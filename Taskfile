@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+# Inspired on https://github.com/adriancooney/Taskfile
+#
+# Install an alias, to be able to simply execute `run`
+# echo 'alias run=./run' >> ~/.aliases
+#
+# alias run=./Taskfile
+# alias help=./Taskfile help
+
+CYAN='\033[0;36m'
+LIGHT_CYAN='\033[1;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+function help {
+    clear
+    echo -e "${CYAN}Get started with:${NC} cd trashing && ./vendor/bin/sail up"
+}
+
+function default {
+    help
+}
+
+function build() {
+  docker build -t finuras/sidecar .
+}
+
+function buildAndDeploy() {
+  build
+  docker push finuras/sidecar
+}
+
+function bash() {
+  docker run --rm -it -v $PWD:/opt finuras/sidecar bash
+}
+
+function run() {
+  echo "$1 $2 $3"
+  docker run --rm -it -v "$(pwd)":/opt finuras/sidecar install finurasApp
+}
+
+function runDist() {
+    docker run --rm \
+        --pull=always \
+        -v "$(pwd)":/opt \
+        -w /opt \
+        finuras/sidecar install finurasApp
+}
+
+function resetSandbox() {
+  #  find /opt/sandbox/ -type f -not -name '.gitignore' -delete
+  #  find /opt/sandbox/ -type d -not -name '.gitignore' -exec echo {} \;
+  rm -rf /opt/sandbox/finurasApp
+}
+
+function install() {
+  #resetSandbox
+  defaultFinurasLaravel $1
+}
+
+function defaultFinurasLaravel() {
+  cd /opt/sandbox/finurasApp
+  baseLaravel $1
+  breeze
+  spatieRay
+  composer require --ignore-platform-reqs --dev barryvdh/laravel-debugbar barryvdh/laravel-ide-helper
+  # Missing: Docker for forge
+  # Missing: configuration for auto generation, need to change composer scripts as docs https://github.com/barryvdh/laravel-ide-helper
+  composer require --ignore-platform-reqs ip2location/ip2location-laravel
+  composer require --ignore-platform-reqs spatie/laravel-discord-alerts
+  npm i @fingerprintjs/fingerprintjs
+  # Missing: configure tailwind js with the plugins
+  npm i @headlessui/vue @tailwindcss/typography @tailwindcss/forms @tailwindcss/line-clamp @tailwindcss/aspect-ratio @tailwindcss/container-queries
+}
+
+function spatieRay() {
+  composer require --ignore-platform-reqs spatie/laravel-ray --dev
+  php artisan ray:publish-config --docker
+  mv ray.php config/ray.php
+}
+
+function breeze() {
+  composer require --ignore-platform-reqs laravel/breeze --dev
+  php artisan breeze:install
+  #php artisan migrate #print in final instructions
+  #npm install #print in final instructions
+}
+
+function baseLaravel() {
+  composer create-project --ignore-platform-reqs laravel/laravel "${1:-example-app}"
+}
+
+
+
+
+
+
+TIMEFORMAT="Task completed in %3lR"
+time "${@:-default}"
