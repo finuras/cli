@@ -62,6 +62,7 @@ function defaultFinurasLaravel() {
   cd /opt
   baseLaravel $1
   cd $1
+  php artisan sail:install --with=mysql,redis,meilisearch,mailhog,selenium
   breeze
   spatieRay
   # Missing: Docker for forge
