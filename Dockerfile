@@ -40,6 +40,12 @@ RUN mkdir /temp && cd /temp \
     && composer require --ignore-platform-reqs  --dev \
         laravel/breeze \
         spatie/laravel-ray \
+        barryvdh/laravel-debugbar barryvdh/laravel-ide-helper \
+        ip2location/ip2location-laravel \
+        spatie/laravel-discord-alerts \
+    && npm i @fingerprintjs/fingerprintjs \
+        @headlessui/vue @tailwindcss/typography @tailwindcss/forms @tailwindcss/line-clamp \
+        @tailwindcss/aspect-ratio @tailwindcss/container-queries \
     && rm -rf example-app
 
 

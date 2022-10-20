@@ -8,6 +8,8 @@
 # alias run=./Taskfile
 # alias help=./Taskfile help
 
+set -e
+
 CYAN='\033[0;36m'
 LIGHT_CYAN='\033[1;36m'
 BOLD='\033[1m'
@@ -35,9 +37,13 @@ function bash() {
   docker run --rm -it -v $PWD:/opt finuras/sidecar bash
 }
 
-function run() {
-  echo "$1 $2 $3"
-  docker run --rm -it -v "$(pwd)":/opt finuras/sidecar install finurasApp
+function runDev() {
+  docker run --rm -it -v "$(pwd)/sandbox":/opt finuras/sidecar resetDevSandbox
+  docker run --rm -it -v "$(pwd)/sandbox":/opt finuras/sidecar install finurasApp
+}
+
+function resetDevSandbox() {
+  rm -rf /opt/finurasApp
 }
 
 function runDist() {
@@ -45,28 +51,22 @@ function runDist() {
         --pull=always \
         -v "$(pwd)":/opt \
         -w /opt \
-        finuras/sidecar install finurasApp
-}
-
-function resetSandbox() {
-  #  find /opt/sandbox/ -type f -not -name '.gitignore' -delete
-  #  find /opt/sandbox/ -type d -not -name '.gitignore' -exec echo {} \;
-  rm -rf /opt/sandbox/finurasApp
+        finuras/sidecar install example-app
 }
 
 function install() {
-  #resetSandbox
   defaultFinurasLaravel $1
 }
 
 function defaultFinurasLaravel() {
-  cd /opt/sandbox/finurasApp
+  cd /opt
   baseLaravel $1
+  cd $1
   breeze
   spatieRay
-  composer require --ignore-platform-reqs --dev barryvdh/laravel-debugbar barryvdh/laravel-ide-helper
   # Missing: Docker for forge
   # Missing: configuration for auto generation, need to change composer scripts as docs https://github.com/barryvdh/laravel-ide-helper
+  composer require --ignore-platform-reqs --dev barryvdh/laravel-debugbar barryvdh/laravel-ide-helper
   composer require --ignore-platform-reqs ip2location/ip2location-laravel
   composer require --ignore-platform-reqs spatie/laravel-discord-alerts
   npm i @fingerprintjs/fingerprintjs
@@ -90,11 +90,6 @@ function breeze() {
 function baseLaravel() {
   composer create-project --ignore-platform-reqs laravel/laravel "${1:-example-app}"
 }
-
-
-
-
-
 
 TIMEFORMAT="Task completed in %3lR"
 time "${@:-default}"

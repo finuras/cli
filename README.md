@@ -6,5 +6,5 @@ docker run --rm \
     --pull=always \
     -v "$(pwd)":/opt \
     -w /opt \
-    finuras/sidecar install appName
+    finuras/sidecar install example-app
 ```
